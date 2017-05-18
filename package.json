@@ -2,9 +2,10 @@
   "name": "PMBot",
   "version": "0.0.1",
   "description": "slack bot to help workflow [for pms]",
-  "main": "app.js",
+  "main": "app/pmbot.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "babel-node ./app/pmbot.js --presets es2015,stage-2",
+    "test": "node_modules/.bin/mocha --compilers js:babel-core/register *tests/test.js"
   },
   "author": "DALI Lab",
   "license": "ISC",
@@ -16,7 +17,14 @@
     "eslint-config-airbnb": "^14.1.0",
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-jsx-a11y": "^4.0.0",
-    "eslint-plugin-react": "^6.10.3",
-    "firebase": "^3.7.5"
+    "firebase": "^3.7.5",
+    "babel-cli": "^6.24.1",
+    "babel-eslint": "^7.2.2",
+    "babel-preset-env": "^1.3.3",
+    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-stage-2": "^6.24.1",
+    "chai": "^3.5.0",
+    "mocha": "^3.2.0",
+    "supertest": "^3.0.0"
   }
 }
