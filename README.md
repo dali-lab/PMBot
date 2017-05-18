@@ -4,8 +4,15 @@
 ```bash
 cd PMBot
 npm install
-firebase=<firebase token> slack=<slack token> node pmbot.js
+firebase=<firebase token> slack=<slack token> npm start
 ```
+
+## Testing
+```bash
+cd PMBot
+npm test
+```
+
 Join `#<some Slack channel at DALI>` to get access tokens for test development.
 
 
