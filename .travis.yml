@@ -1,0 +1,12 @@
+language: node_js
+node_js:
+  - 7.0.0
+
+notifications:
+  # slack: dali-lab:j1R8y4zYZQbfgaymyWmypTpX
+  email:
+    recipients:
+      - tyler.r.burnam.19@dartmouth.edu
+    #  - pat@dali.dartmouth.edu
+    on_success: never
+    on_failure: always
