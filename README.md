@@ -1,4 +1,5 @@
 # PM Slack bot
+[![Build Status](https://travis-ci.org/tburnam/PMBot.svg?branch=master)](https://travis-ci.org/tburnam/PMBot)
 
 ## Usage
 ```bash
