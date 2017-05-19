@@ -4,10 +4,25 @@ if (!process.env.slack || !process.env.firebase) {
 }
 
 const RtmClient = require('@slack/client').RtmClient;
+const WebClient = require('@slack/client').WebClient;
+
+
 const RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 const db = require('./database');
 
-// Build client
+// Return codes
+const MESSAGE_TYPE = {
+  INIT: 'INIT',
+  STANDUP: 'STANDUP',
+  NONE: 'NONE',
+};
+
+// Commands
+const pmInit = 'pm-init';
+const pmStandup = 'pm-standup';
+
+// Build web client and rtm client
+const web = new WebClient(process.env.slack);
 const slack = new RtmClient(process.env.slack);
 slack.start();
 
@@ -19,13 +34,11 @@ slack.on(RTM_EVENTS.MESSAGE, (message) => {
     // Route message to appropriate handler
     // See types/subtypes: https://api.slack.com/events/message
   switch (message.subtype) {
-    case 'bot_message':
-      handleBot(message);
-      break;
 
-    case 'file_share':
-      handleFile(message);
-      break;
+    // TODO: Gracefully handle message subtypes
+    // case '< some subtype >':
+    //   handle(message)
+    //   break;
 
     default:
       handleMessage(message);
@@ -35,36 +48,68 @@ slack.on(RTM_EVENTS.MESSAGE, (message) => {
 
 
 // Message handlers
-function handleBot(message) {
-  slack.sendMessage('Commit logged!', message.channel);
-  db.saveCommit(message);
-}
 
-function handleFile(message) {
-  slack.sendMessage('I\'m going to put those files somewhere', message.channel);
-
-  if (message.file.filetype === 'space') {
-    console.log('saving slack post');
-    db.savePost(message);
-  } else if (message.file.filetype === 'jpg' || message.file.filetype === 'png') {
-    console.log('saving jpg/png');
-    db.saveImage(message);
-  } else {
-        // db.saveGeneral(message);
-    console.log('unrecognized file type');
-  }
-}
-
+// Routes the content of a message
 function handleMessage(message) {
+  // Check if it's a mention
   const directMention = message.text.indexOf(`<@${slack.activeUserId}>`);
   if (directMention !== -1) {
-    slack.sendMessage('You mentioned me!', message.channel);
-    handleCommand(message, directMention);
+    console.log(message.user);
+
+
+    // Check message
+    const commandType = checkMessageForCommand(message);
+
+    console.log(commandType);
+    switch (commandType) {
+      case MESSAGE_TYPE.INIT:
+        // TODO: Handle
+        break;
+
+      case MESSAGE_TYPE.STANDUP:
+        slack.sendMessage('Sending out standup', message.channel);
+        sendDirectMessage(message.user, 'It\'s time for your weekly standup!');
+      // TODO: This should start a "conversation" instance of some sort
+        break;
+
+      default:
+        // TODO: Handle
+        break;
+    }
   }
 }
 
-function handleCommand(message, index) {
-  const offset = (`<@${slack.activeUserId}>`).length;
-  const command = message.text.substring(index + offset);
-  slack.sendMessage(`Command arguments: ${command.trim().split(' ')}`, message.channel);
+
+// Utility methods
+
+// Checks for commands in message
+function checkMessageForCommand(message) {
+  const initCommand = message.text.indexOf(pmInit);
+  const standupCommand = message.text.indexOf(pmStandup);
+
+  if (initCommand > -1) {
+    return MESSAGE_TYPE.INIT;
+  }
+
+  if (standupCommand > -1) {
+    return MESSAGE_TYPE.STANDUP;
+  }
+
+  return MESSAGE_TYPE.NONE;
+}
+
+// Returns tokenized string of message
+function tokenizeMessage(message) {
+  return message.text.split(' ');
+}
+
+// Method that sends a direct message to a userID
+function sendDirectMessage(userID, message) {
+  web.chat.postMessage(userID, message, { as_user: true }, (err, res) => {
+    if (err) {
+      console.log('Error:', err);
+    } else {
+      console.log('Message sent: ', res);
+    }
+  });
 }
