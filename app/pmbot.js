@@ -1,4 +1,5 @@
 import db from './database';
+import standup from './standup';
 import { commands, COMMAND_TYPE } from './commands';
 
 if (!process.env.slack || !process.env.firebase) {
@@ -7,11 +8,10 @@ if (!process.env.slack || !process.env.firebase) {
 }
 
 const RtmClient = require('@slack/client').RtmClient;
-const WebClient = require('@slack/client').WebClient;
 const RTM_EVENTS = require('@slack/client').RTM_EVENTS;
 
 // Build web client and rtm client
-const web = new WebClient(process.env.slack);
+// TODO abstract slack stuff to slackUtils
 const slack = new RtmClient(process.env.slack);
 slack.start();
 
@@ -47,9 +47,8 @@ function handleMessage(message) {
         break;
 
       case COMMAND_TYPE.STANDUP:
+        standup.processStandupMessage(message);
         slack.sendMessage('Sending out standup', message.channel);
-        sendDirectMessage(message.user, 'It\'s time for your weekly standup!');
-        // TODO: This should start a "conversation" instance of some sort
         break;
 
       default:
@@ -65,15 +64,4 @@ function handleMessage(message) {
 
 function isDirectMessage(userID, string) {
   return string.indexOf(`<@${slack.activeUserId}>`) !== -1;
-}
-
-// Method that sends a direct message to a userID
-function sendDirectMessage(userID, message) {
-  web.chat.postMessage(userID, message, { as_user: true }, (err, res) => {
-    if (err) {
-      console.log('Error:', err);
-    } else {
-      console.log('Message sent: ', res);
-    }
-  });
 }
