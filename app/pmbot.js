@@ -5,10 +5,9 @@ if (!process.env.slack || !process.env.firebase) {
 
 const RtmClient = require('@slack/client').RtmClient;
 const WebClient = require('@slack/client').WebClient;
-
-
 const RTM_EVENTS = require('@slack/client').RTM_EVENTS;
-const db = require('./database');
+
+import db from './database';
 
 // Return codes
 const MESSAGE_TYPE = {
@@ -28,13 +27,12 @@ slack.start();
 
 // Handles any incoming message from slack.
 slack.on(RTM_EVENTS.MESSAGE, (message) => {
-    // Debug line for us
+  // Debug line for us
   console.log('Message:', message);
 
-    // Route message to appropriate handler
-    // See types/subtypes: https://api.slack.com/events/message
+  // Route message to appropriate handler
+  // See types/subtypes: https://api.slack.com/events/message
   switch (message.subtype) {
-
     // TODO: Gracefully handle message subtypes
     // case '< some subtype >':
     //   handle(message)
@@ -46,7 +44,6 @@ slack.on(RTM_EVENTS.MESSAGE, (message) => {
   }
 });
 
-
 // Message handlers
 
 // Routes the content of a message
@@ -54,22 +51,18 @@ function handleMessage(message) {
   // Check if it's a mention
   const directMention = message.text.indexOf(`<@${slack.activeUserId}>`);
   if (directMention !== -1) {
-    console.log(message.user);
-
-
     // Check message
     const commandType = checkMessageForCommand(message);
 
-    console.log(commandType);
     switch (commandType) {
       case MESSAGE_TYPE.INIT:
-        // TODO: Handle
+        db.initTeam(message);
         break;
 
       case MESSAGE_TYPE.STANDUP:
         slack.sendMessage('Sending out standup', message.channel);
         sendDirectMessage(message.user, 'It\'s time for your weekly standup!');
-      // TODO: This should start a "conversation" instance of some sort
+        // TODO: This should start a "conversation" instance of some sort
         break;
 
       default:
@@ -78,7 +71,6 @@ function handleMessage(message) {
     }
   }
 }
-
 
 // Utility methods
 
