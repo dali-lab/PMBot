@@ -1,4 +1,5 @@
-const firebase = require('firebase');
+import firebase from 'firebase';
+import commands from './commands';
 
 const config = {
   apiKey: process.env.firebase,
@@ -11,13 +12,39 @@ const config = {
 firebase.initializeApp(config);
 
 const rootRef = firebase.database().ref();
+const teamRef = rootRef.child('teams');
+// const membersRef = rootRef.child('members');
 const postRef = rootRef.child('post');
 const imageRef = rootRef.child('image');
 const commitRef = rootRef.child('commit');
 const generalRef = rootRef.child('general');
 
-
 const db = {
+  initTeam(message) {
+    const regex = /<@(.*)>/;
+    const userIds = message.text
+      .split(' ')
+      .slice(1) // remove @pmbot
+      .map((x) => {
+        if (regex.test(x)) {
+          return regex.exec(x)[1];
+        } else {
+          return '';
+        }
+      })
+      .filter((x) => {
+        return x !== '';
+      });
+
+    teamRef.child(message.channel).update({
+      members: Array.from(new Set(userIds)), // removes duplicates
+    });
+  },
+
+  saveStandup(message) {},
+
+  getMostRecentStandup(team) {},
+
   savePost(message) {
     postRef.push().set({
       ts: message.ts,
