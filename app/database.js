@@ -24,22 +24,21 @@ const db = {
     const regex = /<@(.*)>/;
     const userIds = message.text
       .split(' ')
-      .slice(2) // remove mention of pmbot
-      // .filter((word) => { // remove commands
-      //   return !commands.has(word);
-      // })
-      .map((word) => {
-        console.log(word);
-        if (regex.test(word)) {
-          return regex.exec(word)[1];
+      .slice(1) // remove @pmbot
+      .map((x) => {
+        if (regex.test(x)) {
+          return regex.exec(x)[1];
         } else {
           return '';
         }
+      })
+      .filter((x) => {
+        return x !== '';
       });
 
     teamRef.update({
       channel_id: message.channel,
-      members: userIds,
+      members: Array.from(new Set(userIds)), // removes duplicates
     });
   },
 
