@@ -36,8 +36,7 @@ const db = {
         return x !== '';
       });
 
-    teamRef.update({
-      channel_id: message.channel,
+    teamRef.child(message.channel).update({
       members: Array.from(new Set(userIds)), // removes duplicates
     });
   },
