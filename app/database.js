@@ -1,5 +1,4 @@
 import firebase from 'firebase';
-import commands from './commands';
 
 const config = {
   apiKey: process.env.firebase,

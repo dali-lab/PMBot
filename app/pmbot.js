@@ -1,3 +1,6 @@
+import db from './database';
+import { commands, COMMAND_TYPE } from './commands';
+
 if (!process.env.slack || !process.env.firebase) {
   console.log('Error: Specify slack and firebase token in environment');
   process.exit(1);
@@ -6,19 +9,6 @@ if (!process.env.slack || !process.env.firebase) {
 const RtmClient = require('@slack/client').RtmClient;
 const WebClient = require('@slack/client').WebClient;
 const RTM_EVENTS = require('@slack/client').RTM_EVENTS;
-
-import db from './database';
-
-// Return codes
-const MESSAGE_TYPE = {
-  INIT: 'INIT',
-  STANDUP: 'STANDUP',
-  NONE: 'NONE',
-};
-
-// Commands
-const pmInit = 'pm-init';
-const pmStandup = 'pm-standup';
 
 // Build web client and rtm client
 const web = new WebClient(process.env.slack);
@@ -49,17 +39,14 @@ slack.on(RTM_EVENTS.MESSAGE, (message) => {
 // Routes the content of a message
 function handleMessage(message) {
   // Check if it's a mention
-  const directMention = message.text.indexOf(`<@${slack.activeUserId}>`);
-  if (directMention !== -1) {
+  if (isDirectMessage(slack.activeUserId, message.text)) {
     // Check message
-    const commandType = checkMessageForCommand(message);
-
-    switch (commandType) {
-      case MESSAGE_TYPE.INIT:
+    switch (commands.getCommand(message.text)) {
+      case COMMAND_TYPE.INIT:
         db.initTeam(message);
         break;
 
-      case MESSAGE_TYPE.STANDUP:
+      case COMMAND_TYPE.STANDUP:
         slack.sendMessage('Sending out standup', message.channel);
         sendDirectMessage(message.user, 'It\'s time for your weekly standup!');
         // TODO: This should start a "conversation" instance of some sort
@@ -69,30 +56,15 @@ function handleMessage(message) {
         // TODO: Handle
         break;
     }
+  } else {
+    console.log('not dm');
   }
 }
 
 // Utility methods
 
-// Checks for commands in message
-function checkMessageForCommand(message) {
-  const initCommand = message.text.indexOf(pmInit);
-  const standupCommand = message.text.indexOf(pmStandup);
-
-  if (initCommand > -1) {
-    return MESSAGE_TYPE.INIT;
-  }
-
-  if (standupCommand > -1) {
-    return MESSAGE_TYPE.STANDUP;
-  }
-
-  return MESSAGE_TYPE.NONE;
-}
-
-// Returns tokenized string of message
-function tokenizeMessage(message) {
-  return message.text.split(' ');
+function isDirectMessage(userID, string) {
+  return string.indexOf(`<@${slack.activeUserId}>`) !== -1;
 }
 
 // Method that sends a direct message to a userID

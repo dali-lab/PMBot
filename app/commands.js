@@ -1,3 +1,22 @@
-const commands = ['pm-init', 'pm-standup']; // doesn't work; use a set?
+const COMMANDS = ['init', 'standup'];
 
-module.exports = commands;
+const COMMAND_TYPE = {
+  INIT: 'INIT',
+  STANDUP: 'STANDUP',
+  NONE: 'NONE',
+};
+
+const commands = {
+  getCommand(str) {
+    let cmd = COMMAND_TYPE.NONE;
+    Object.values(COMMANDS).forEach((command) => {
+      if (str.indexOf(command) !== -1) {
+        cmd = COMMAND_TYPE[command.toUpperCase()];
+      }
+    });
+
+    return cmd;
+  },
+};
+
+export { commands, COMMAND_TYPE };
