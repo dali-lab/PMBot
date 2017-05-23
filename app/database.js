@@ -19,10 +19,13 @@ const db = {
   initTeam(message) {
     const userIds = regexUtils.userIds(message.text, true);
     teamRef.child(message.channel).update({
+      name: '??',
       users: userIds,
+      numUsers: userIds.length,
     });
 
     const data = {
+      name: '??',
       team: message.channel,
     };
 
@@ -35,13 +38,32 @@ const db = {
     userRef.child(userId).update(data);
   },
 
-  getUsersForTeam(teamID) {
+  initStandup(teamId) {
+    const standupRef = teamRef.child(teamId).child('standups').push();
     return new Promise((resolve, reject) => {
-      teamRef.child(teamID).child('users').once('value').then((snapshot) => {
+      teamRef
+        .child(teamId)
+        .child('numUsers')
+        .once('value')
+        .then((snapshot) => {
+          standupRef.update({
+            remainingResponses: snapshot.val(),
+            responses: null,
+          });
+        })
+        .then(() => {
+          return resolve(standupRef);
+        });
+    });
+  },
+
+  getUsersForTeam(teamId) {
+    return new Promise((resolve, reject) => {
+      teamRef.child(teamId).child('users').once('value').then((snapshot) => {
         if (snapshot.val()) {
           return resolve(snapshot);
         } else {
-          return reject(`No value for team/${teamID}/users`);
+          return reject(`No value for team/${teamId}/users`);
         }
       });
     });
@@ -52,4 +74,4 @@ const db = {
   getMostRecentStandup(team) {},
 };
 
-module.exports = db;
+export default db;
