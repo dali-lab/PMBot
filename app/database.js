@@ -1,5 +1,5 @@
 import firebase from 'firebase';
-import commands from './commands';
+import regexUtils from './regexUtils';
 
 const config = {
   apiKey: process.env.firebase,
@@ -13,81 +13,92 @@ firebase.initializeApp(config);
 
 const rootRef = firebase.database().ref();
 const teamRef = rootRef.child('teams');
-// const membersRef = rootRef.child('members');
-const postRef = rootRef.child('post');
-const imageRef = rootRef.child('image');
-const commitRef = rootRef.child('commit');
-const generalRef = rootRef.child('general');
+const userRef = rootRef.child('users');
 
 const db = {
   initTeam(message) {
-    const regex = /<@(.*)>/;
-    const userIds = message.text
-      .split(' ')
-      .slice(1) // remove @pmbot
-      .map((x) => {
-        if (regex.test(x)) {
-          return regex.exec(x)[1];
-        } else {
-          return '';
-        }
-      })
-      .filter((x) => {
-        return x !== '';
-      });
-
+    const userIds = regexUtils.userIds(message.text, true);
     teamRef.child(message.channel).update({
-      members: Array.from(new Set(userIds)), // removes duplicates
+      name: '??',
+      users: userIds,
+      numUsers: userIds.length,
+    });
+
+    const data = {
+      name: '??',
+      team: message.channel,
+    };
+
+    Object.values(userIds).forEach((userId) => {
+      this.initUser(userId, data);
     });
   },
 
-  saveStandup(message) {},
+  initUser(userId, data) {
+    userRef.child(userId).update(data);
+  },
 
-  getMostRecentStandup(team) {},
-
-  savePost(message) {
-    postRef.push().set({
-      ts: message.ts,
-      author: message.username,
-      title: message.file.title,
-      link: message.file.permalink,
+  initStandup(teamId) {
+    const standupRef = teamRef.child(teamId).child('standups').push();
+    return new Promise((resolve, reject) => {
+      teamRef
+        .child(teamId)
+        .child('numUsers')
+        .once('value')
+        .then((snapshot) => {
+          standupRef.update({
+            remainingResponses: snapshot.val(),
+            responses: null,
+          });
+        })
+        .then(() => {
+          return resolve(standupRef);
+        });
     });
   },
 
-  saveImage(message) {
-    imageRef.push().set({
-      ts: message.ts,
-      author: message.username,
-      title: message.file.title,
-      link: message.file.url_private,
-    });
-  },
-
-  saveGeneral(message) {
-    generalRef.push().set({
-      ts: message.ts,
-      author: message.username,
-      title: message.file.title,
-      link: message.file.permalink,
-      type: message.file.mimetype,
-    });
-  },
-
-  saveCommit(message) {
-    const authorRegex = '> by ([a-zA-Z]*)';
-    const urlRegex = '<(.*?)\\|';
-    const commitMsgRegex = '` (.*?) -';
-
-    const commits = message.attachments[0].text.split('\n');
-    for (let i = 0; i < commits.length; i++) {
-      commitRef.push().set({
-        ts: message.ts,
-        author: message.attachments[0].fallback.match(authorRegex)[1],
-        link: commits[i].match(urlRegex)[1],
-        message: commits[i].match(commitMsgRegex)[1],
+  getUsersForTeam(teamId) {
+    return new Promise((resolve, reject) => {
+      teamRef.child(teamId).child('users').once('value').then((snapshot) => {
+        if (snapshot.val()) {
+          return resolve(snapshot.val());
+        } else {
+          return reject(`No value for team/${teamId}/users`);
+        }
       });
-    }
+    });
   },
+
+  getTeamForUser(userId) {
+    return new Promise((resolve, reject) => {
+      userRef.child(userId).child('team').once('value').then((snapshot) => {
+        if (snapshot.val()) {
+          return resolve(snapshot.val());
+        } else {
+          return reject(`No value for users/${userId}/team.`);
+        }
+      });
+    });
+  },
+
+  getMostRecentStandup(teamId) {
+    return new Promise((resolve, reject) => {
+      teamRef
+        .child(teamId)
+        .child('standups')
+        .limitToLast(1) // TODO does this actually give the most recent standup?
+        .once('value')
+        .then((snapshot) => {
+          if (snapshot.val()) {
+            return Object.keys(snapshot.val())[0];
+          } else {
+            return reject(`No value for teams/${teamId}/standups.`);
+          }
+        });
+    });
+  },
+
+  saveStandupMessage(standupId, message) {},
 };
 
-module.exports = db;
+export default db;
