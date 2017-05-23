@@ -19,4 +19,5 @@ const commands = {
   },
 };
 
-export { commands, COMMAND_TYPE };
+export default commands;
+export { COMMAND_TYPE };

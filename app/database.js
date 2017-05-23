@@ -61,7 +61,7 @@ const db = {
     return new Promise((resolve, reject) => {
       teamRef.child(teamId).child('users').once('value').then((snapshot) => {
         if (snapshot.val()) {
-          return resolve(snapshot);
+          return resolve(snapshot.val());
         } else {
           return reject(`No value for team/${teamId}/users`);
         }
@@ -69,9 +69,36 @@ const db = {
     });
   },
 
-  saveStandup(message) {},
+  getTeamForUser(userId) {
+    return new Promise((resolve, reject) => {
+      userRef.child(userId).child('team').once('value').then((snapshot) => {
+        if (snapshot.val()) {
+          return resolve(snapshot.val());
+        } else {
+          return reject(`No value for users/${userId}/team.`);
+        }
+      });
+    });
+  },
 
-  getMostRecentStandup(team) {},
+  getMostRecentStandup(teamId) {
+    return new Promise((resolve, reject) => {
+      teamRef
+        .child(teamId)
+        .child('standups')
+        .limitToLast(1) // TODO does this actually give the most recent standup?
+        .once('value')
+        .then((snapshot) => {
+          if (snapshot.val()) {
+            return Object.keys(snapshot.val())[0];
+          } else {
+            return reject(`No value for teams/${teamId}/standups.`);
+          }
+        });
+    });
+  },
+
+  saveStandupMessage(standupId, message) {},
 };
 
 export default db;

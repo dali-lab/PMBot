@@ -1,6 +1,7 @@
 import db from './database';
 import standup from './standup';
-import { commands, COMMAND_TYPE } from './commands';
+import commands, { COMMAND_TYPE } from './commands';
+import slackUtils, { MESSAGE_TYPE } from './slackUtils';
 
 if (!process.env.slack || !process.env.firebase) {
   console.log('Error: Specify slack and firebase token in environment');
@@ -22,6 +23,7 @@ slack.on(RTM_EVENTS.MESSAGE, (message) => {
     console.log('Message:', message);
   }
 
+  /*
   // Route message to appropriate handler
   // See types/subtypes: https://api.slack.com/events/message
   switch (message.subtype) {
@@ -31,17 +33,39 @@ slack.on(RTM_EVENTS.MESSAGE, (message) => {
     //   break;
 
     default:
-      handleMessage(message);
+      handleChannelMessage(message);
+      break;
+  }
+*/
+
+  switch (slackUtils.messageType(message)) {
+    case MESSAGE_TYPE.DM:
+      handleDirectMessage(message);
+      break;
+
+    case MESSAGE_TYPE.CHANNEL:
+      handleChannelMessage(message);
+      break;
+
+    case MESSAGE_TYPE.GROUP:
+      break;
+
+    default:
       break;
   }
 });
 
 // Message handlers
 
+function handleDirectMessage(message) {
+  // TODO ignore message from self
+  standup.recieveStandup(message);
+}
+
 // Routes the content of a message
-function handleMessage(message) {
+function handleChannelMessage(message) {
   // Check if it's a mention
-  if (isDM(slack.activeUserId, message.text)) {
+  if (slackUtils.isMention(slack.activeUserId, message.text)) {
     // Check message
     switch (commands.getCommand(message.text)) {
       case COMMAND_TYPE.INIT:
@@ -52,18 +76,16 @@ function handleMessage(message) {
       case COMMAND_TYPE.STANDUP:
         console.log(COMMAND_TYPE.STANDUP);
         standup.startStandup(message);
-        slack.sendMessage('Sending out standup', message.channel);
+        slackUtils.sendMessage(message.channel, 'Sending out standup');
         break;
 
       default:
-        // TODO: Handle
+        // TODO: Handle. show help?
         break;
     }
+  } else {
+    // ignore
   }
 }
 
 // Utility methods
-
-function isDM(userID, string) {
-  return string.indexOf(`<@${slack.activeUserId}>`) !== -1;
-}

@@ -8,14 +8,26 @@ const standup = {
       .then(() => {
         return db.getUsersForTeam(message.channel);
       })
-      .then((snapshot) => {
-        slackUtils.sendDMs(
-          snapshot.val(),
-          'It\'s time for your weekly standup!',
-        );
+      .then((userIds) => {
+        slackUtils.sendMessages(userIds, 'It\'s time for your weekly standup!');
       })
       .catch((err) => {
         console.log(`startStandup Error: ${err}`);
+      });
+  },
+
+  // TODO do something with remainingResponses
+  recieveStandup(message) {
+    db
+      .getTeamForUser(message.user)
+      .then((teamId) => {
+        return db.getMostRecentStandup(teamId);
+      })
+      .then((standupId) => {
+        return db.saveStandupMessage(standupId, message);
+      })
+      .catch((err) => {
+        console.log(`recieveStandup Error: ${err}`);
       });
   },
 };
