@@ -13,6 +13,7 @@ firebase.initializeApp(config);
 
 const rootRef = firebase.database().ref();
 const teamRef = rootRef.child('teams');
+const userRef = rootRef.child('users');
 
 const db = {
   initTeam(message) {
@@ -20,9 +21,19 @@ const db = {
     teamRef.child(message.channel).update({
       users: userIds,
     });
+
+    const data = {
+      team: message.channel,
+    };
+
+    Object.values(userIds).forEach((userId) => {
+      this.initUser(userId, data);
+    });
   },
 
-  initUser(userId) {},
+  initUser(userId, data) {
+    userRef.child(userId).update(data);
+  },
 
   getUsersForTeam(teamID) {
     return new Promise((resolve, reject) => {
