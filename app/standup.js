@@ -4,7 +4,7 @@ import slackUtils from './slackUtils';
 const standup = {
   startStandup(message) {
     db
-      .getMembersForTeam(message.channel)
+      .getUsersForTeam(message.channel)
       .then((snapshot) => {
         slackUtils.sendDMs(
           snapshot.val(),

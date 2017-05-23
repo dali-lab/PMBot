@@ -41,7 +41,7 @@ slack.on(RTM_EVENTS.MESSAGE, (message) => {
 // Routes the content of a message
 function handleMessage(message) {
   // Check if it's a mention
-  if (isDirectMessage(slack.activeUserId, message.text)) {
+  if (isDM(slack.activeUserId, message.text)) {
     // Check message
     switch (commands.getCommand(message.text)) {
       case COMMAND_TYPE.INIT:
@@ -59,12 +59,11 @@ function handleMessage(message) {
         // TODO: Handle
         break;
     }
-  } else {
   }
 }
 
 // Utility methods
 
-function isDirectMessage(userID, string) {
+function isDM(userID, string) {
   return string.indexOf(`<@${slack.activeUserId}>`) !== -1;
 }

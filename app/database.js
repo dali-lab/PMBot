@@ -1,4 +1,5 @@
 import firebase from 'firebase';
+import regexUtils from './regexUtils';
 
 const config = {
   apiKey: process.env.firebase,
@@ -15,33 +16,21 @@ const teamRef = rootRef.child('teams');
 
 const db = {
   initTeam(message) {
-    const regex = /<@(.*)>/;
-    const userIds = message.text
-      .split(' ')
-      .slice(1) // remove @pmbot
-      .map((x) => {
-        if (regex.test(x)) {
-          return regex.exec(x)[1];
-        } else {
-          return '';
-        }
-      })
-      .filter((x) => {
-        return x !== '';
-      });
-
+    const userIds = regexUtils.userIds(message.text, true);
     teamRef.child(message.channel).update({
-      members: Array.from(new Set(userIds)), // removes duplicates
+      users: userIds,
     });
   },
 
-  getMembersForTeam(teamID) {
+  initUser(userId) {},
+
+  getUsersForTeam(teamID) {
     return new Promise((resolve, reject) => {
-      teamRef.child(teamID).child('members').once('value').then((snapshot) => {
+      teamRef.child(teamID).child('users').once('value').then((snapshot) => {
         if (snapshot.val()) {
           return resolve(snapshot);
         } else {
-          return reject(`No value for team/${teamID}/members`);
+          return reject(`No value for team/${teamID}/users`);
         }
       });
     });
