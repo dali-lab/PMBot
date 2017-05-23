@@ -18,7 +18,9 @@ slack.start();
 // Handles any incoming message from slack.
 slack.on(RTM_EVENTS.MESSAGE, (message) => {
   // Debug line for us
-  console.log('Message:', message);
+  if (message.user !== slack.activeUserId) {
+    console.log('Message:', message);
+  }
 
   // Route message to appropriate handler
   // See types/subtypes: https://api.slack.com/events/message
@@ -43,11 +45,13 @@ function handleMessage(message) {
     // Check message
     switch (commands.getCommand(message.text)) {
       case COMMAND_TYPE.INIT:
+        console.log(COMMAND_TYPE.INIT);
         db.initTeam(message);
         break;
 
       case COMMAND_TYPE.STANDUP:
-        standup.processStandupMessage(message);
+        console.log(COMMAND_TYPE.STANDUP);
+        standup.startStandup(message);
         slack.sendMessage('Sending out standup', message.channel);
         break;
 
@@ -56,7 +60,6 @@ function handleMessage(message) {
         break;
     }
   } else {
-    console.log('not dm');
   }
 }
 

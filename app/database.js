@@ -12,11 +12,6 @@ firebase.initializeApp(config);
 
 const rootRef = firebase.database().ref();
 const teamRef = rootRef.child('teams');
-// const membersRef = rootRef.child('members');
-const postRef = rootRef.child('post');
-const imageRef = rootRef.child('image');
-const commitRef = rootRef.child('commit');
-const generalRef = rootRef.child('general');
 
 const db = {
   initTeam(message) {
@@ -40,53 +35,21 @@ const db = {
     });
   },
 
+  getMembersForTeam(teamID) {
+    return new Promise((resolve, reject) => {
+      teamRef.child(teamID).child('members').once('value').then((snapshot) => {
+        if (snapshot.val()) {
+          return resolve(snapshot);
+        } else {
+          return reject(`No value for team/${teamID}/members`);
+        }
+      });
+    });
+  },
+
   saveStandup(message) {},
 
   getMostRecentStandup(team) {},
-
-  savePost(message) {
-    postRef.push().set({
-      ts: message.ts,
-      author: message.username,
-      title: message.file.title,
-      link: message.file.permalink,
-    });
-  },
-
-  saveImage(message) {
-    imageRef.push().set({
-      ts: message.ts,
-      author: message.username,
-      title: message.file.title,
-      link: message.file.url_private,
-    });
-  },
-
-  saveGeneral(message) {
-    generalRef.push().set({
-      ts: message.ts,
-      author: message.username,
-      title: message.file.title,
-      link: message.file.permalink,
-      type: message.file.mimetype,
-    });
-  },
-
-  saveCommit(message) {
-    const authorRegex = '> by ([a-zA-Z]*)';
-    const urlRegex = '<(.*?)\\|';
-    const commitMsgRegex = '` (.*?) -';
-
-    const commits = message.attachments[0].text.split('\n');
-    for (let i = 0; i < commits.length; i++) {
-      commitRef.push().set({
-        ts: message.ts,
-        author: message.attachments[0].fallback.match(authorRegex)[1],
-        link: commits[i].match(urlRegex)[1],
-        message: commits[i].match(commitMsgRegex)[1],
-      });
-    }
-  },
 };
 
 module.exports = db;
