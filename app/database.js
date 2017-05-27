@@ -81,7 +81,7 @@ const db = {
     });
   },
 
-  getMostRecentStandup(teamId) {
+  getMostRecentStandupRef(teamId) {
     return new Promise((resolve, reject) => {
       teamRef
         .child(teamId)
@@ -90,7 +90,9 @@ const db = {
         .once('value')
         .then((snapshot) => {
           if (snapshot.val()) {
-            return Object.keys(snapshot.val())[0];
+            return resolve(
+              `${teamId}/standups/${Object.keys(snapshot.val())[0]}`,
+            );
           } else {
             return reject(`No value for teams/${teamId}/standups.`);
           }
@@ -98,7 +100,9 @@ const db = {
     });
   },
 
-  saveStandupMessage(standupId, message) {},
+  saveStandupMessage(standupRef, message) {
+    teamRef.child(standupRef).child('responses').push(message.text);
+  },
 };
 
 export default db;

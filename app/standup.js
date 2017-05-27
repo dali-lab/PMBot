@@ -16,15 +16,14 @@ const standup = {
       });
   },
 
-  // TODO do something with remainingResponses
   recieveStandup(message) {
     db
       .getTeamForUser(message.user)
       .then((teamId) => {
-        return db.getMostRecentStandup(teamId);
+        return db.getMostRecentStandupRef(teamId);
       })
-      .then((standupId) => {
-        return db.saveStandupMessage(standupId, message);
+      .then((standupRef) => {
+        return db.saveStandupMessage(standupRef, message);
       })
       .catch((err) => {
         console.log(`recieveStandup Error: ${err}`);
