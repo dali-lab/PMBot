@@ -17,13 +17,7 @@ const slack = new RtmClient(process.env.slack);
 slack.start();
 
 // Handles any incoming message from slack.
-slack.on(RTM_EVENTS.MESSAGE, (message) => {
-  // Debug line for us
-  if (message.user !== slack.activeUserId) {
-    console.log('Message:', message);
-  }
-
-  /*
+/*
   // Route message to appropriate handler
   // See types/subtypes: https://api.slack.com/events/message
   switch (message.subtype) {
@@ -37,21 +31,26 @@ slack.on(RTM_EVENTS.MESSAGE, (message) => {
       break;
   }
 */
+slack.on(RTM_EVENTS.MESSAGE, (message) => {
+  // not from me
+  if (!slackUtils.isFrom(slack.activeUserId, message)) {
+    console.log('Message:', message); // debug line
 
-  switch (slackUtils.messageType(message)) {
-    case MESSAGE_TYPE.DM:
-      handleDirectMessage(message);
-      break;
+    switch (slackUtils.messageType(message)) {
+      case MESSAGE_TYPE.DM:
+        handleDirectMessage(message);
+        break;
 
-    case MESSAGE_TYPE.CHANNEL:
-      handleChannelMessage(message);
-      break;
+      case MESSAGE_TYPE.CHANNEL:
+        handleChannelMessage(message);
+        break;
 
-    case MESSAGE_TYPE.GROUP:
-      break;
+      case MESSAGE_TYPE.GROUP:
+        break;
 
-    default:
-      break;
+      default:
+        break;
+    }
   }
 });
 
@@ -59,6 +58,7 @@ slack.on(RTM_EVENTS.MESSAGE, (message) => {
 
 function handleDirectMessage(message) {
   // TODO ignore message from self
+  console.log('STANDUP MESSAGE');
   standup.recieveStandup(message);
 }
 

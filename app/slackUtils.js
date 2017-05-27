@@ -38,6 +38,10 @@ const slackUtils = {
     return MESSAGE_TYPE[MESSAGE_TYPE_RAW[message.channel[0]]];
   },
 
+  isFrom(userId, message) {
+    return message.user === userId;
+  },
+
   isMention(userId, string) {
     return string.indexOf(`<@${userId}>`) !== -1;
   },
